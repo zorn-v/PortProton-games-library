@@ -184,7 +184,7 @@ Type=Application
 Categories=Game
 StartupNotify=true
 Path={shlex.quote(scripts_dir)}
-Icon={shlex.quote(base_dir + '/data/img/' + Path(exe_file).stem + '.png')}
+Icon={base_dir + '/data/img/' + Path(item.text()).stem + '.png'}
 """, encoding='utf-8')
         os.chmod(shortcut, 0o755)
         win.reload_list()

@@ -232,12 +232,23 @@ class GameList(QListWidget):
         selected = selected[0]
         menu = QMenu(self)
         desktop = menu.addAction(self.style().standardIcon(QStyle.SP_DesktopIcon), 'Add to desktop')
+        restore_gui = menu.addAction(self.style().standardIcon(QStyle.SP_DialogResetButton), 'Restore PP GUI')
         remove = menu.addAction(self.style().standardIcon(QStyle.SP_TrashIcon), 'Remove game entry')
         uninstall = menu.addAction(self.style().standardIcon(QStyle.SP_DialogCloseButton), 'Uninstall game')
         action = menu.exec(self.mapToGlobal(event.pos()))
         desktop_shortcut = QStandardPaths.writableLocation(QStandardPaths.DesktopLocation) + '/' + Path(selected.desktop_file).name
         if action == desktop:
             shutil.copy(selected.desktop_file, desktop_shortcut)
+        if action == restore_gui:
+            ppdb = shlex.split(selected.get('Exec'))[-1] + '.ppdb'
+            if not Path(ppdb).exists():
+                return
+            with open(ppdb, 'r') as read:
+                with open(ppdb + '.new', 'w') as write:
+                    while (line := read.readline()):
+                        if 'PW_GUI_DISABLED_CS' not in line:
+                            write.write(line)
+            os.rename(ppdb + '.new', ppdb)
         if action == remove:
             Path(desktop_shortcut).unlink(True)
             Path(selected.desktop_file).unlink(True)

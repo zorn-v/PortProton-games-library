@@ -113,6 +113,7 @@ class InstallGame(QDialog):
         self.setLayout(layout)
         self.resize(400, 300)
         self.setModal(True)
+        self.setWindowTitle('Select game exe file')
         geometry = settings.value('geometry_install')
         if geometry:
             self.restoreGeometry(geometry)

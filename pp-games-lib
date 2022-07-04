@@ -184,7 +184,6 @@ class InstallGame(QDialog):
         Path(shortcut).write_text(f"""[Desktop Entry]
 Name={shortcut_name}
 Exec=env {shlex.quote(g.scripts_dir + '/start.sh')} {exe_file}
-GameDir={game_dir}
 Type=Application
 Categories=Game
 StartupNotify=true
@@ -262,7 +261,7 @@ class GameList(QListWidget):
             Path(desktop_shortcut).unlink(True)
             Path(selected.desktop_file).unlink(True)
             Path(selected.get('Icon')).unlink(True)
-            game_dir = selected.get('GameDir')
+            game_dir = selected.game_dir()
             if game_dir:
                 shutil.rmtree(g.games_dir + '/' + game_dir, True)
             self.reload()
@@ -285,6 +284,9 @@ class GameItem(QListWidgetItem):
 
     def get(self, name, fallback=None):
         return self.config.get('Desktop Entry', name, fallback=fallback)
+
+    def game_dir(self):
+        return shlex.split(self.get('Exec'))[-1][len(g.games_dir) + 1:].split('/')[0]
 
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)

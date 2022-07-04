@@ -6,6 +6,7 @@ import shutil
 from configparser import ConfigParser
 from pathlib import Path
 from subprocess import run
+from types import SimpleNamespace
 from PyQt5.QtCore import QSettings, QSize, QStandardPaths, Qt
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import (
@@ -17,6 +18,7 @@ from PyQt5.QtWidgets import (
 )
 
 settings = QSettings('PPGL', 'PortProtonGamesLib')
+g = SimpleNamespace()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -27,25 +29,25 @@ class MainWindow(QMainWindow):
         if geometry:
             self.restoreGeometry(geometry)
 
-        global base_dir, scripts_dir, shortcuts_dir, games_dir, install_pfx
         shortcut = ConfigParser()
         shortcut.read(os.getenv('HOME') + '/.local/share/applications/PortProton.desktop')
         scripts_dir = shortcut.get('Desktop Entry', 'Path', fallback=None)
         if not scripts_dir or not Path(scripts_dir).is_dir():
             QMessageBox.critical(self, 'Error', 'Can not find installed PortProton')
             exit(1)
-        scripts_dir = scripts_dir.rstrip('/')
-        self.icon_path = shortcut.get('Desktop Entry', 'Icon', fallback=None)
-        pp_icon = QIcon(self.icon_path)
+        g.scripts_dir = scripts_dir.rstrip('/')
+        g.pp_icon = shortcut.get('Desktop Entry', 'Icon', fallback=None)
+        pp_icon = QIcon(g.pp_icon)
         self.setWindowIcon(pp_icon)
         self.setWindowTitle('PortProton games library')
 
-        base_dir = str(Path(scripts_dir + '/../..').resolve())
-        install_pfx = base_dir + '/data/prefixes/INSTALL'
-        shortcuts_dir = base_dir + '/shortcuts'
-        games_dir = base_dir + '/games'
-        Path(shortcuts_dir).mkdir(parents=True, exist_ok=True)
-        Path(games_dir).mkdir(parents=True, exist_ok=True)
+        g.base_dir = str(Path(scripts_dir + '/../..').resolve())
+        g.install_pfx = g.base_dir + '/data/prefixes/INSTALL'
+        g.shortcuts_dir = g.base_dir + '/shortcuts'
+        g.games_dir = g.base_dir + '/games'
+
+        Path(g.shortcuts_dir).mkdir(parents=True, exist_ok=True)
+        Path(g.games_dir).mkdir(parents=True, exist_ok=True)
 
         self.game_list = GameList()
         self.setCentralWidget(self.game_list)
@@ -83,14 +85,14 @@ class MainWindow(QMainWindow):
         self.game_list.reload()
 
     def drop_prefix(self):
-        res = QMessageBox.question(self, 'Are you shure ?', 'Do you really want to remove<br/><b>' + install_pfx + '</b> ?')
+        res = QMessageBox.question(self, 'Are you shure ?', 'Do you really want to remove<br/><b>' + g.install_pfx + '</b> ?')
         if res == QMessageBox.Yes:
-            shutil.rmtree(install_pfx, True)
+            shutil.rmtree(g.install_pfx, True)
 
     def run_pp(self):
         self.setDisabled(True)
         app.processEvents()
-        run([scripts_dir + '/start.sh'])
+        run([g.scripts_dir + '/start.sh'])
         self.setDisabled(False)
 
     def closeEvent(self, event):
@@ -103,10 +105,7 @@ class InstallGame(QDialog):
         super(InstallGame, self).__init__(parent)
         self._parent = parent
         self._installing = installing
-        if installing:
-            self.install_dir = install_pfx + '/drive_c/Games'
-        else:
-            self.install_dir = games_dir
+        self.install_dir = g.install_pfx + '/drive_c/Games' if installing else g.games_dir
         self._exe_list = QListWidget(self)
         self._exe_list.itemDoubleClicked.connect(self._handleDoubleClick)
         layout = QVBoxLayout()
@@ -137,7 +136,7 @@ class InstallGame(QDialog):
                     export PW_PREFIX_NAME=INSTALL
                     export PW_MUST_HAVE_DLL=mfc42
                 ' > {ppdb}
-                {shlex.quote(scripts_dir + '/start.sh')} {shlex.quote(exe_file)}
+                {shlex.quote(g.scripts_dir + '/start.sh')} {shlex.quote(exe_file)}
                 rm -f {ppdb}
             """
             run(['bash', '-c', script])
@@ -163,32 +162,32 @@ class InstallGame(QDialog):
         if not ok or not shortcut_name:
             return
         self.setDisabled(True)
-        exe_file = shlex.quote(games_dir + '/' + item.text())
+        exe_file = shlex.quote(g.games_dir + '/' + item.text())
         if self._installing:
             src_dir = self.install_dir + '/' + game_dir
-            dst_dir = games_dir + '/' + game_dir
+            dst_dir = g.games_dir + '/' + game_dir
             os.rename(src_dir, dst_dir)
         script = f"""
             export INSTALLING_PORT=1
             export portwine_exe={exe_file}
-            cd {shlex.quote(scripts_dir)}
-            . {shlex.quote(scripts_dir + '/runlib')}
+            cd {shlex.quote(g.scripts_dir)}
+            . {shlex.quote(g.scripts_dir + '/runlib')}
             pw_create_gui_png
-            echo -e "export PW_VULKAN_USE=1\nexport PW_GUI_DISABLED_CS=1" >> {shlex.quote(games_dir + '/' + item.text()) + '.ppdb'}
+            echo -e "export PW_VULKAN_USE=1\nexport PW_GUI_DISABLED_CS=1" >> {shlex.quote(g.games_dir + '/' + item.text()) + '.ppdb'}
         """
         run(['bash', '-c', script])
-        shortcut = f"{shortcuts_dir}/{shortcut_name}.desktop"
-        icon_path = base_dir + '/data/img/' + Path(item.text()).stem + '.png'
+        shortcut = f"{g.shortcuts_dir}/{shortcut_name}.desktop"
+        icon_path = g.base_dir + '/data/img/' + Path(item.text()).stem + '.png'
         if not Path(icon_path).exists():
-            icon_path = win.icon_path
+            icon_path = g.pp_icon
         Path(shortcut).write_text(f"""[Desktop Entry]
 Name={shortcut_name}
-Exec=env {shlex.quote(scripts_dir + '/start.sh')} {exe_file}
+Exec=env {shlex.quote(g.scripts_dir + '/start.sh')} {exe_file}
 GameDir={game_dir}
 Type=Application
 Categories=Game
 StartupNotify=true
-Path={shlex.quote(scripts_dir)}
+Path={shlex.quote(g.scripts_dir)}
 Icon={icon_path}
 """, encoding='utf-8')
         os.chmod(shortcut, 0o755)
@@ -214,7 +213,7 @@ class GameList(QListWidget):
 
     def reload(self):
         self.clear()
-        shortcuts = list(Path(shortcuts_dir).glob('*.desktop'))
+        shortcuts = list(Path(g.shortcuts_dir).glob('*.desktop'))
         shortcuts.sort()
         for shortcut in shortcuts:
             item = GameItem(shortcut)
@@ -264,7 +263,7 @@ class GameList(QListWidget):
             Path(selected.get('Icon')).unlink(True)
             game_dir = selected.get('GameDir')
             if game_dir:
-                shutil.rmtree(games_dir + '/' + game_dir, True)
+                shutil.rmtree(g.games_dir + '/' + game_dir, True)
             self.reload()
 
 
@@ -277,7 +276,8 @@ class GameItem(QListWidgetItem):
         text = self.get('Name', Path(desktop_file).stem)
         self.setToolTip(text)
         self.setText(text)
-        qicon = QIcon(self.get('Icon'))
+        icon_path = self.get('Icon') if Path(self.get('Icon')).exists() else g.pp_icon
+        qicon = QIcon(icon_path)
         self.setIcon(qicon)
         self.setTextAlignment(Qt.AlignHCenter or Qt.AlignTop)
         self.setSizeHint(QSize(100, 105))

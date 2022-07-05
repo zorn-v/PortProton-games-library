@@ -135,7 +135,7 @@ class InstallGame(QDialog):
                     export PW_VULKAN_USE=1
                     export PW_GUI_DISABLED_CS=1
                     export PW_PREFIX_NAME=INSTALL
-                    export PW_MUST_HAVE_DLL=mfc42
+                    export PW_DLL_INSTALL=mfc42
                 ' > {ppdb}
                 {shlex.quote(g.scripts_dir + '/start.sh')} {shlex.quote(exe_file)}
                 rm -f {ppdb}

@@ -162,12 +162,21 @@ class InstallGame(QDialog):
         shortcut_name, ok = QInputDialog.getText(self, 'Please enter shortcut name', 'Shortcut name', text=game_dir)
         if not ok or not shortcut_name:
             return
-        self.setDisabled(True)
+        shortcut = f"{g.shortcuts_dir}/{shortcut_name}.desktop"
+        if Path(shortcut).exists():
+            res = QMessageBox.question(self, 'Shortcut already exuists', 'Shortcut <b>' + shortcut_name + '</b> already exists. Overwrite ?')
+            if res != QMessageBox.Yes:
+                return
+        src_dir = self.install_dir + '/' + game_dir
+        dst_dir = g.games_dir + '/' + game_dir
         exe_file = shlex.quote(g.games_dir + '/' + item.text())
         ppdb = shlex.quote(g.games_dir + '/' + item.text()) + '.ppdb'
+        self.setDisabled(True)
+        if self._installing and Path(dst_dir).exists():
+            res = QMessageBox.question(self, 'Dir already exuists', 'Dir <b>' + game_dir + '</b> already exists. Overwrite ?')
+            if res != QMessageBox.Yes:
+                return
         if self._installing:
-            src_dir = self.install_dir + '/' + game_dir
-            dst_dir = g.games_dir + '/' + game_dir
             os.rename(src_dir, dst_dir)
         script = f"""
             export INSTALLING_PORT=1
@@ -180,7 +189,6 @@ class InstallGame(QDialog):
             echo -e "export PW_VULKAN_USE=${{PW_VULKAN_USE:-1}}\nexport PW_GUI_DISABLED_CS=1" >> {ppdb}
         """
         run(['bash', '-c', script])
-        shortcut = f"{g.shortcuts_dir}/{shortcut_name}.desktop"
         icon_path = g.base_dir + '/data/img/' + Path(item.text()).stem + '.png'
         if not Path(icon_path).exists():
             icon_path = g.pp_icon
@@ -241,6 +249,10 @@ class GameList(QListWidget):
         action = menu.exec(self.mapToGlobal(event.pos()))
         desktop_shortcut = QStandardPaths.writableLocation(QStandardPaths.DesktopLocation) + '/' + Path(selected.desktop_file).name
         if action == desktop:
+            if Path(desktop_shortcut).exists():
+                res = QMessageBox.question(self, 'Shortcut already exuists', 'Desktop shortcut <b>' + desktop_shortcut + '</b> already exists. Overwrite ?')
+                if res != QMessageBox.Yes:
+                    return
             shutil.copy(selected.desktop_file, desktop_shortcut)
         if action == restore_gui:
             ppdb = shlex.split(selected.get('Exec'))[-1] + '.ppdb'

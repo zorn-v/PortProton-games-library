@@ -7,13 +7,14 @@ from configparser import ConfigParser
 from pathlib import Path
 from subprocess import run
 from types import SimpleNamespace
-from PyQt5.QtCore import QSettings, QSize, QStandardPaths, Qt
+from PyQt5.QtCore import pyqtSignal, QSettings, QSize, QStandardPaths, Qt, QThread
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import (
     QAction, QApplication,
     QDialog, QFileDialog, QInputDialog,
     QListWidget, QListWidgetItem,
-    QMainWindow, QMenu, QMessageBox, QPushButton,
+    QMainWindow, QMenu, QMessageBox,
+    QProgressBar, QPushButton,
     QSizePolicy, QStyle, QWidget, QVBoxLayout
 )
 
@@ -100,16 +101,33 @@ class MainWindow(QMainWindow):
         settings.setValue('geometry_main', geometry)
         super(MainWindow, self).closeEvent(event)
 
+class LoadListThread(QThread):
+    completed = pyqtSignal(list)
+    def __init__(self, parent, install_dir):
+        super().__init__(parent)
+        self.install_dir = install_dir
+    def run(self):
+        exe_list = list(Path(self.install_dir).glob('**/*.exe'))
+        self.completed.emit(exe_list)
+
 class InstallGame(QDialog):
     def __init__(self, parent, installing=True):
         super(InstallGame, self).__init__(parent)
         self._parent = parent
         self._installing = installing
         self.install_dir = g.install_pfx + '/drive_c/Games' if installing else g.games_dir
-        self._exe_list = QListWidget(self)
-        self._exe_list.itemDoubleClicked.connect(self._handleDoubleClick)
+        self._exe_list_widget = QListWidget(self)
+        self._exe_list_widget.itemDoubleClicked.connect(self._handleDoubleClick)
         layout = QVBoxLayout()
-        layout.addWidget(self._exe_list)
+        layout.addWidget(self._exe_list_widget)
+
+        self._pbar = QProgressBar(self)
+        self._pbar.setMaximum(0)
+        layout.addWidget(self._pbar)
+        thread = LoadListThread(self, self.install_dir)
+        thread.completed.connect(self.load)
+        thread.start()
+
         if self._installing:
             setup_btn = QPushButton(self)
             setup_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogStart))
@@ -124,28 +142,30 @@ class InstallGame(QDialog):
         if geometry:
             self.restoreGeometry(geometry)
         self.show()
-        self.load()
 
-    def load(self):
-        games_path = Path(self.install_dir)
-        exe_list = list(games_path.glob('**/*.exe'))
+    def load(self, exe_list):
         if self._installing and len(exe_list) == 0:
             self._runSetup()
-            exe_list = list(games_path.glob('**/*.exe'))
+            exe_list = list(Path(self.install_dir).glob('**/*.exe'))
         if len(exe_list) == 0:
             return self.close()
-        exe_list.sort()
-        for exe in exe_list:
-            item = QListWidgetItem(self._exe_list)
-            item.setText(str(exe)[len(self.install_dir)+1:])
-            try:
-                res = run(['wrestool', '-x', '-t14', exe], capture_output=True)
-                pixmap = QPixmap()
-                pixmap.loadFromData(res.stdout)
-                item.setIcon(QIcon(pixmap))
-            except Exception:
-                pass
-            self._exe_list.addItem(item)
+        def render_list():
+            exe_list.sort()
+            for exe in exe_list:
+                item = QListWidgetItem(self._exe_list_widget)
+                item.setText(str(exe)[len(self.install_dir)+1:])
+                try:
+                    res = run(['wrestool', '-x', '-t14', exe], capture_output=True)
+                    pixmap = QPixmap()
+                    pixmap.loadFromData(res.stdout)
+                    item.setIcon(QIcon(pixmap))
+                except Exception:
+                    pass
+                self._exe_list_widget.addItem(item)
+            self._pbar.setVisible(False)
+        thread = QThread(self)
+        thread.run = render_list
+        thread.start()
 
     def _runSetup(self):
         downloads_dir = QStandardPaths.writableLocation(QStandardPaths.DownloadLocation)
@@ -163,7 +183,10 @@ class InstallGame(QDialog):
             {shlex.quote(g.scripts_dir + '/start.sh')} {shlex.quote(exe_file)}
             rm -f {ppdb}
         """
+        self.setDisabled(True)
+        app.processEvents()
         run(['bash', '-c', script])
+        self.setDisabled(False)
 
     def _handleDoubleClick(self, item):
         game_dir = item.text().split('/')[0]

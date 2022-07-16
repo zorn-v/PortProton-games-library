@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import shlex
 import shutil
 from configparser import ConfigParser
@@ -189,12 +190,19 @@ class InstallGame(QDialog):
 
     def _handleDoubleClick(self, item):
         game_dir = item.text().split('/')[0]
-        shortcut_name, ok = QInputDialog.getText(self, 'Please enter shortcut name', 'Shortcut name', text=game_dir)
+        dlg = QInputDialog(self)
+        dlg.setWindowTitle('Please enter game entry name')
+        dlg.setLabelText('New game entry')
+        dlg.setTextValue(game_dir)
+        dlg.resize(300, 0)
+        ok = dlg.exec()
+        shortcut_name = dlg.textValue()
         if not ok or not shortcut_name:
             return
-        shortcut = f"{g.shortcuts_dir}/{shortcut_name}.desktop"
+        file_name = re.sub(r'[<>:/\\|?*]', '_', shortcut_name)
+        shortcut = f"{g.shortcuts_dir}/{file_name}.desktop"
         if Path(shortcut).exists():
-            res = QMessageBox.question(self, 'Shortcut already exuists', 'Shortcut <b>' + shortcut_name + '</b> already exists. Overwrite ?')
+            res = QMessageBox.question(self, 'Shortcut already exuists', 'Shortcut <b>' + file_name + '</b> already exists. Overwrite ?')
             if res != QMessageBox.Yes:
                 return
         src_dir = self.install_dir + '/' + game_dir

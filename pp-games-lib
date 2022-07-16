@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QAction, QApplication,
     QDialog, QFileDialog, QInputDialog,
     QListWidget, QListWidgetItem,
-    QMainWindow, QMenu, QMessageBox,
+    QMainWindow, QMenu, QMessageBox, QPushButton,
     QSizePolicy, QStyle, QWidget, QVBoxLayout
 )
 
@@ -110,6 +110,12 @@ class InstallGame(QDialog):
         self._exe_list.itemDoubleClicked.connect(self._handleDoubleClick)
         layout = QVBoxLayout()
         layout.addWidget(self._exe_list)
+        if self._installing:
+            setup_btn = QPushButton(self)
+            setup_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogStart))
+            setup_btn.setText('Run another setup')
+            setup_btn.clicked.connect(self._runSetup)
+            layout.addWidget(setup_btn)
         self.setLayout(layout)
         self.resize(400, 300)
         self.setModal(True)
@@ -124,23 +130,7 @@ class InstallGame(QDialog):
         games_path = Path(self.install_dir)
         exe_list = list(games_path.glob('**/*.exe'))
         if self._installing and len(exe_list) == 0:
-            downloads_dir = QStandardPaths.writableLocation(QStandardPaths.DownloadLocation)
-            exe_file, _ = QFileDialog.getOpenFileName(self, caption='Choose setup file', filter='Exe files (*.exe)', directory=downloads_dir)
-            if not exe_file:
-                return self.close()
-
-            ppdb = shlex.quote(exe_file + '.ppdb')
-            script = f"""
-                echo '
-                    export PW_VULKAN_USE=1
-                    export PW_GUI_DISABLED_CS=1
-                    export PW_PREFIX_NAME=INSTALL
-                    export PW_DLL_INSTALL=mfc42
-                ' > {ppdb}
-                {shlex.quote(g.scripts_dir + '/start.sh')} {shlex.quote(exe_file)}
-                rm -f {ppdb}
-            """
-            run(['bash', '-c', script])
+            self._runSetup()
             exe_list = list(games_path.glob('**/*.exe'))
         if len(exe_list) == 0:
             return self.close()
@@ -156,6 +146,24 @@ class InstallGame(QDialog):
             except Exception:
                 pass
             self._exe_list.addItem(item)
+
+    def _runSetup(self):
+        downloads_dir = QStandardPaths.writableLocation(QStandardPaths.DownloadLocation)
+        exe_file, _ = QFileDialog.getOpenFileName(self, caption='Choose setup file', filter='Exe files (*.exe)', directory=downloads_dir)
+        if not exe_file:
+            return
+        ppdb = shlex.quote(exe_file + '.ppdb')
+        script = f"""
+            echo '
+                export PW_VULKAN_USE=1
+                export PW_GUI_DISABLED_CS=1
+                export PW_PREFIX_NAME=INSTALL
+                export PW_DLL_INSTALL=mfc42
+            ' > {ppdb}
+            {shlex.quote(g.scripts_dir + '/start.sh')} {shlex.quote(exe_file)}
+            rm -f {ppdb}
+        """
+        run(['bash', '-c', script])
 
     def _handleDoubleClick(self, item):
         game_dir = item.text().split('/')[0]

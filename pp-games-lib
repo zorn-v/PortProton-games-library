@@ -150,8 +150,7 @@ class InstallGame(QDialog):
         if len(exe_list) == 0:
             return self.close()
         def render_list():
-            exe_list.sort()
-            for exe in exe_list:
+            for exe in sorted(exe_list):
                 item = QListWidgetItem(self._exe_list_widget)
                 item.setText(str(exe)[len(self.install_dir)+1:])
                 try:
@@ -256,10 +255,10 @@ class GameList(QListWidget):
     def reload(self):
         self.clear()
         shortcuts = list(Path(g.shortcuts_dir).glob('*.desktop'))
-        shortcuts.sort()
         for shortcut in shortcuts:
             item = GameItem(shortcut)
             self.addItem(item)
+        self.sortItems()
 
     def _handleDoubleClick(self, item):
         win.setDisabled(True)

@@ -251,7 +251,7 @@ Icon={icon_path}
 class GameList(QListWidget):
     def __init__(self):
         super().__init__()
-        self.itemDoubleClicked.connect(self._handleDoubleClick)
+        self.itemActivated.connect(self.runGame)
         self.setViewMode(QListWidget.IconMode)
         self.setResizeMode(QListWidget.Adjust)
         self.setIconSize(QSize(64, 64))
@@ -267,7 +267,7 @@ class GameList(QListWidget):
             self.addItem(item)
         self.sortItems()
 
-    def _handleDoubleClick(self, item):
+    def runGame(self, item):
         win.setDisabled(True)
         app.processEvents()
         run(['bash', '-c', item.get('Exec')])

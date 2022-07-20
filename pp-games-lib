@@ -8,12 +8,12 @@ from configparser import ConfigParser
 from pathlib import Path
 from subprocess import run
 from types import SimpleNamespace
-from PyQt5.QtCore import pyqtSignal, QSettings, QSize, QStandardPaths, Qt, QThread
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import pyqtSignal, QModelIndex, QSettings, QSize, QStandardPaths, Qt, QThread
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QAction, QApplication,
     QDialog, QFileDialog, QInputDialog,
-    QListWidget, QListWidgetItem,
+    QFrame, QLabel, QListWidget, QListWidgetItem,
     QMainWindow, QMenu, QMessageBox,
     QProgressBar, QPushButton,
     QSizePolicy, QStyle, QWidget, QVBoxLayout
@@ -50,6 +50,16 @@ class MainWindow(QMainWindow):
 
         Path(g.shortcuts_dir).mkdir(parents=True, exist_ok=True)
         Path(g.games_dir).mkdir(parents=True, exist_ok=True)
+
+        sep = QFrame()
+        sep.setFrameShape(sep.VLine | sep.Sunken)
+        self._status_size = QLabel(self)
+        self._status_dir = QLabel(self)
+        self.statusBar().setVisible(False)
+        self.statusBar().addWidget(self._status_dir, 1)
+        self.statusBar().addWidget(sep)
+        self.statusBar().addWidget(self._status_size)
+
 
         self.game_list = GameList(self)
         self.setCentralWidget(self.game_list)
@@ -98,8 +108,10 @@ class MainWindow(QMainWindow):
         self.setDisabled(False)
 
     def set_status(self, item):
-        msg = 'Size: ' + item.dir_size_human + ' | ' + item.game_dir if item else ''
-        self.statusBar().showMessage(msg)
+        self.statusBar().setVisible(bool(item))
+        if item:
+            self._status_size.setText('Size: ' + item.dir_size_human)
+            self._status_dir.setText(' ' + item.game_dir)
 
     def closeEvent(self, event):
         geometry = self.saveGeometry()
@@ -271,6 +283,7 @@ class GameList(QListWidget):
             item = GameItem(self, shortcut)
             self.addItem(item)
         self.sortItems()
+        self.setCurrentIndex(QModelIndex())
 
     def runGame(self, item):
         win.setDisabled(True)

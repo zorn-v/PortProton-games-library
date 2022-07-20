@@ -291,6 +291,8 @@ class GameList(QListWidget):
         restore_gui = menu.addAction(self.style().standardIcon(QStyle.SP_DialogResetButton), 'Restore PP GUI')
         remove = menu.addAction(self.style().standardIcon(QStyle.SP_TrashIcon), 'Remove game entry')
         uninstall = menu.addAction(self.style().standardIcon(QStyle.SP_DialogCloseButton), 'Uninstall game')
+        if not selected.game_dir.startswith(g.games_dir):
+            uninstall.setVisible(False)
         action = menu.exec(self.mapToGlobal(event.pos()))
         desktop_shortcut = QStandardPaths.writableLocation(QStandardPaths.DesktopLocation) + '/' + Path(selected.desktop_file).name
         if action == desktop:
@@ -324,7 +326,7 @@ class GameList(QListWidget):
             Path(desktop_shortcut).unlink(True)
             Path(selected.desktop_file).unlink(True)
             Path(selected.get('Icon')).unlink(True)
-            if selected.game_dir.startswith(selected.game_dir):
+            if selected.game_dir.startswith(g.games_dir):
                 shutil.rmtree(selected.game_dir, True)
             self.reload()
 

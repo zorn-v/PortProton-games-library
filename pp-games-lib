@@ -24,7 +24,7 @@ g = SimpleNamespace()
 
 class MainWindow(QMainWindow):
     def __init__(self):
-        super(MainWindow, self).__init__()
+        super().__init__()
 
         self.resize(QSize(800, 600))
         geometry = settings.value('geometry_main')
@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         geometry = self.saveGeometry()
         settings.setValue('geometry_main', geometry)
-        super(MainWindow, self).closeEvent(event)
+        super().closeEvent(event)
 
 class LoadListThread(QThread):
     completed = pyqtSignal(list)
@@ -113,8 +113,7 @@ class LoadListThread(QThread):
 
 class InstallGame(QDialog):
     def __init__(self, parent, installing=True):
-        super(InstallGame, self).__init__(parent)
-        self._parent = parent
+        super().__init__(parent)
         self._installing = installing
         self.install_dir = g.install_pfx + '/drive_c/Games' if installing else g.games_dir
         self._exe_list_widget = QListWidget(self)
@@ -246,12 +245,12 @@ Icon={icon_path}
     def closeEvent(self, event):
         geometry = self.saveGeometry()
         settings.setValue('geometry_install', geometry)
-        super(InstallGame, self).closeEvent(event)
+        super().closeEvent(event)
 
 
 class GameList(QListWidget):
     def __init__(self):
-        super(GameList, self).__init__()
+        super().__init__()
         self.itemDoubleClicked.connect(self._handleDoubleClick)
         self.setViewMode(QListWidget.IconMode)
         self.setResizeMode(QListWidget.Adjust)
@@ -322,7 +321,7 @@ class GameList(QListWidget):
 
 class GameItem(QListWidgetItem):
     def __init__(self, desktop_file):
-        super(GameItem, self).__init__()
+        super().__init__()
         self.desktop_file = desktop_file
         self.config = ConfigParser()
         self.config.read(desktop_file)

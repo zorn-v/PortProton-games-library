@@ -155,13 +155,13 @@ class InstallGame(QDialog):
             return self.close()
         def render_list():
             for exe in sorted(exe_list):
+                ico_file = str(exe) + '.ico'
                 item = QListWidgetItem(self._exe_list_widget)
                 item.setText(str(exe)[len(self.install_dir)+1:])
                 try:
-                    res = run(['wrestool', '-x', '-t14', exe], capture_output=True)
-                    pixmap = QPixmap()
-                    pixmap.loadFromData(res.stdout)
-                    item.setIcon(QIcon(pixmap))
+                    if not Path(ico_file).exists():
+                        run(['wrestool', '-x', '-t14', '-o', ico_file, exe], capture_output=True)
+                    item.setIcon(QIcon(ico_file))
                 except Exception:
                     pass
                 self._exe_list_widget.addItem(item)

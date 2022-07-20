@@ -51,7 +51,7 @@ class MainWindow(QMainWindow):
         Path(g.shortcuts_dir).mkdir(parents=True, exist_ok=True)
         Path(g.games_dir).mkdir(parents=True, exist_ok=True)
 
-        self.game_list = GameList()
+        self.game_list = GameList(self)
         self.setCentralWidget(self.game_list)
 
         self.toolbar = self.addToolBar('Main')
@@ -96,6 +96,10 @@ class MainWindow(QMainWindow):
         app.processEvents()
         run([g.scripts_dir + '/start.sh'])
         self.setDisabled(False)
+
+    def set_status(self, item):
+        msg = 'Size: ' + item.dir_size_human + ' | ' + item.game_dir if item else ''
+        self.statusBar().showMessage(msg)
 
     def closeEvent(self, event):
         geometry = self.saveGeometry()
@@ -249,9 +253,10 @@ Icon={icon_path}
 
 
 class GameList(QListWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         self.itemActivated.connect(self.runGame)
+        self.currentItemChanged.connect(self.selectItem)
         self.setViewMode(QListWidget.IconMode)
         self.setResizeMode(QListWidget.Adjust)
         self.setIconSize(QSize(64, 64))
@@ -263,7 +268,7 @@ class GameList(QListWidget):
         self.clear()
         shortcuts = list(Path(g.shortcuts_dir).glob('*.desktop'))
         for shortcut in shortcuts:
-            item = GameItem(shortcut)
+            item = GameItem(self, shortcut)
             self.addItem(item)
         self.sortItems()
 
@@ -272,6 +277,9 @@ class GameList(QListWidget):
         app.processEvents()
         run(['bash', '-c', item.get('Exec')])
         win.setDisabled(False)
+
+    def selectItem(self, item):
+        win.set_status(item)
 
     def contextMenuEvent(self, event):
         selected = self.selectedItems()
@@ -307,21 +315,32 @@ class GameList(QListWidget):
             Path(selected.get('Icon')).unlink(True)
             self.reload()
         if action == uninstall:
-            res = QMessageBox.question(self, 'Are you shure ?', 'Do you really want to uninstall<br/><b>' + selected.get('Name') + '</b> ?')
+            res = QMessageBox.question(self,
+                'Are you shure ?',
+                'Do you really want to uninstall <b>' + selected.get('Name') + '</b><br/>located in "<b>'+selected.game_dir+'</b>" ?'
+            )
             if res != QMessageBox.Yes:
                 return
             Path(desktop_shortcut).unlink(True)
             Path(selected.desktop_file).unlink(True)
             Path(selected.get('Icon')).unlink(True)
-            game_dir = selected.game_dir()
-            if game_dir:
-                shutil.rmtree(g.games_dir + '/' + game_dir, True)
+            if selected.game_dir.startswith(selected.game_dir):
+                shutil.rmtree(selected.game_dir, True)
             self.reload()
 
 
+def human_size(num):
+    if not num:
+        return "-"
+    for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
+        if abs(num) < 1024.0:
+            return f"{num:.2f} {unit}B"
+        num /= 1024.0
+    return f"{num:.2f} YiB"
+
 class GameItem(QListWidgetItem):
-    def __init__(self, desktop_file):
-        super().__init__()
+    def __init__(self, parent, desktop_file):
+        super().__init__(parent)
         self.desktop_file = desktop_file
         self.config = ConfigParser()
         self.config.read(desktop_file)
@@ -333,12 +352,32 @@ class GameItem(QListWidgetItem):
         self.setIcon(qicon)
         self.setTextAlignment(Qt.AlignHCenter or Qt.AlignTop)
         self.setSizeHint(QSize(100, 105))
+        self.game_dir = shlex.split(self.get('Exec'))[-1]
+        if self.game_dir.startswith(g.games_dir):
+            self.game_dir = g.games_dir + '/' + self.game_dir[len(g.games_dir)+1:].split('/')[0]
+        else:
+            self.game_dir = str(Path(self.game_dir).parent)
+        self._set_dir_size(None)
+        dir_size_cache = self.game_dir + '/.size'
+        if Path(dir_size_cache).exists():
+            self._set_dir_size(int(Path(dir_size_cache).read_text()))
+        else:
+            def calc_dir_size():
+                if not Path(self.game_dir).exists():
+                    return
+                dir_size = sum(p.stat().st_size for p in Path(self.game_dir).rglob('*'))
+                self._set_dir_size(dir_size)
+                Path(dir_size_cache).write_text(str(dir_size))
+            thread = QThread(parent)
+            thread.run = calc_dir_size
+            thread.start()
 
     def get(self, name, fallback=None):
         return self.config.get('Desktop Entry', name, fallback=fallback)
 
-    def game_dir(self):
-        return shlex.split(self.get('Exec'))[-1][len(g.games_dir) + 1:].split('/')[0]
+    def _set_dir_size(self, size):
+        self.dir_size = size
+        self.dir_size_human = human_size(size)
 
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)

@@ -189,6 +189,7 @@ class InstallGame(QDialog):
             return
         ppdb = shlex.quote(exe_file + '.ppdb')
         script = f"""
+            mkdir -p {shlex.quote(g.install_pfx + '/drive_c/Games')}
             echo '
                 export PW_VULKAN_USE=1
                 export PW_GUI_DISABLED_CS=1

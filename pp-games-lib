@@ -12,7 +12,7 @@ try:
     from PyQt6.QtCore import * # type: ignore
     from PyQt6.QtGui import * # type: ignore
     from PyQt6.QtWidgets import * # type: ignore
-except ModuleNotFoundError as e:
+except ModuleNotFoundError:
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
     from PyQt5.QtWidgets import *
@@ -132,6 +132,7 @@ class InstallGame(QDialog):
         self._installing = installing
         self.install_dir = g.install_pfx + '/drive_c/Games' if installing else g.games_dir
         self._exe_list_widget = QListWidget(self)
+        self._exe_list_widget.setIconSize(QSize(16, 16))
         self._exe_list_widget.itemDoubleClicked.connect(self._handleDoubleClick)
         layout = QVBoxLayout()
         layout.addWidget(self._exe_list_widget)
@@ -165,6 +166,9 @@ class InstallGame(QDialog):
         if len(exe_list) == 0:
             return self.close()
         def render_list():
+            pixmap = QPixmap(16, 16)
+            pixmap.fill(Qt.GlobalColor.transparent)
+            empty_icon = QIcon(pixmap)
             for exe in sorted(exe_list):
                 ico_file = str(exe) + '.ico'
                 item = QListWidgetItem(self._exe_list_widget)
@@ -175,6 +179,8 @@ class InstallGame(QDialog):
                     item.setIcon(QIcon(ico_file))
                 except Exception:
                     pass
+                if item.icon().pixmap(16, 16).isNull():
+                    item.setIcon(empty_icon)
                 self._exe_list_widget.addItem(item)
             self._pbar.setVisible(False)
         thread = QThread(self)

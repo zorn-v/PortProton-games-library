@@ -8,16 +8,14 @@ from configparser import ConfigParser
 from pathlib import Path
 from subprocess import run
 from types import SimpleNamespace
-from PyQt5.QtCore import pyqtSignal, QModelIndex, QSettings, QSize, QStandardPaths, Qt, QThread
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import (
-    QAction, QApplication,
-    QDialog, QFileDialog, QInputDialog,
-    QFrame, QLabel, QListWidget, QListWidgetItem,
-    QMainWindow, QMenu, QMessageBox,
-    QProgressBar, QPushButton,
-    QSizePolicy, QStyle, QWidget, QVBoxLayout
-)
+try:
+    from PyQt6.QtCore import *
+    from PyQt6.QtGui import *
+    from PyQt6.QtWidgets import *
+except ModuleNotFoundError as e:
+    from PyQt5.QtCore import *
+    from PyQt5.QtGui import *
+    from PyQt5.QtWidgets import *
 
 settings = QSettings('PPGL', 'PortProtonGamesLib')
 g = SimpleNamespace()

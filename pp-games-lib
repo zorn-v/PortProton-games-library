@@ -284,10 +284,20 @@ class GameList(QListWidget):
 
     def reload(self):
         self.clear()
+        def validate(shortcut):
+            config = ConfigParser()
+            config.read(shortcut)
+            try:
+                if config.get('Desktop Entry', 'Exec'):
+                    return True
+            except Exception:
+                return False
         shortcuts = list(Path(g.shortcuts_dir).glob('*.desktop'))
+        shortcuts += list(Path(g.base_dir).glob('*.desktop'))
         for shortcut in shortcuts:
-            item = GameItem(self, shortcut)
-            self.addItem(item)
+            if validate(shortcut):
+                item = GameItem(self, shortcut)
+                self.addItem(item)
         self.sortItems()
         self.setCurrentIndex(QModelIndex())
 

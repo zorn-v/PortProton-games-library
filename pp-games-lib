@@ -52,7 +52,8 @@ class MainWindow(QMainWindow):
         Path(g.games_dir).mkdir(parents=True, exist_ok=True)
 
         sep = QFrame(self)
-        sep.setFrameShape(sep.VLine | sep.Sunken)
+        sep.setFrameShape(QFrame.Shape.VLine)
+        sep.setFrameShadow(QFrame.Shadow.Sunken)
         self._status_size = QLabel(self)
         self._status_dir = QLabel(self)
         self.statusBar().setVisible(False)
@@ -66,22 +67,22 @@ class MainWindow(QMainWindow):
 
         self.toolbar = self.addToolBar('Main')
         self.toolbar.setIconSize(QSize(32, 32))
-        self.toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.toolbar.setMovable(False)
-        action = QAction(self.style().standardIcon(QStyle.SP_FileDialogNewFolder), 'Install new game', self)
+        action = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder), 'Install new game', self)
         action.triggered.connect(self.install_game)
         self.toolbar.addAction(action)
-        action = QAction(self.style().standardIcon(QStyle.SP_FileLinkIcon), 'Add game entry', self)
+        action = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileLinkIcon), 'Add game entry', self)
         action.triggered.connect(self.add_game)
         self.toolbar.addAction(action)
-        action = QAction(self.style().standardIcon(QStyle.SP_BrowserReload), 'Reload list', self)
+        action = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload), 'Reload list', self)
         action.triggered.connect(self.reload_list)
         self.toolbar.addAction(action)
-        action = QAction(self.style().standardIcon(QStyle.SP_TrashIcon), 'Drop install prefix', self)
+        action = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon), 'Drop install prefix', self)
         action.triggered.connect(self.drop_prefix)
         self.toolbar.addAction(action)
         spacer = QWidget(self)
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.toolbar.addWidget(spacer)
         action = QAction(pp_icon, 'PortProton', self)
         action.triggered.connect(self.run_pp)
@@ -98,7 +99,7 @@ class MainWindow(QMainWindow):
 
     def drop_prefix(self):
         res = QMessageBox.question(self, 'Are you shure ?', 'Do you really want to remove<br/><b>' + g.install_pfx + '</b> ?')
-        if res == QMessageBox.Yes:
+        if res == QMessageBox.StandardButton.Yes:
             shutil.rmtree(g.install_pfx, True)
 
     def run_pp(self):
@@ -146,7 +147,7 @@ class InstallGame(QDialog):
 
         if self._installing:
             setup_btn = QPushButton(self)
-            setup_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogStart))
+            setup_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogStart))
             setup_btn.setText('Run another setup')
             setup_btn.clicked.connect(self._runSetup)
             layout.addWidget(setup_btn)
@@ -183,7 +184,7 @@ class InstallGame(QDialog):
         thread.start()
 
     def _runSetup(self):
-        downloads_dir = QStandardPaths.writableLocation(QStandardPaths.DownloadLocation)
+        downloads_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DownloadLocation)
         exe_file, _ = QFileDialog.getOpenFileName(self, caption='Choose setup file', filter='Exe files (*.exe)', directory=downloads_dir)
         if not exe_file:
             return
@@ -219,7 +220,7 @@ class InstallGame(QDialog):
         shortcut = f"{g.shortcuts_dir}/{file_name}.desktop"
         if Path(shortcut).exists():
             res = QMessageBox.question(self, 'Shortcut already exuists', 'Shortcut <b>' + file_name + '</b> already exists. Overwrite ?')
-            if res != QMessageBox.Yes:
+            if res != QMessageBox.StandardButton.Yes:
                 return
         src_dir = self.install_dir + '/' + game_dir
         dst_dir = g.games_dir + '/' + game_dir
@@ -228,7 +229,7 @@ class InstallGame(QDialog):
         self.setDisabled(True)
         if self._installing and Path(dst_dir).exists():
             res = QMessageBox.question(self, 'Dir already exuists', 'Dir <b>' + game_dir + '</b> already exists. Overwrite ?')
-            if res != QMessageBox.Yes:
+            if res != QMessageBox.StandardButton.Yes:
                 return
         if self._installing:
             os.rename(src_dir, dst_dir)
@@ -270,8 +271,8 @@ class GameList(QListWidget):
         super().__init__(parent)
         self.itemActivated.connect(self.runGame)
         self.currentItemChanged.connect(self.selectItem)
-        self.setViewMode(QListWidget.IconMode)
-        self.setResizeMode(QListWidget.Adjust)
+        self.setViewMode(QListWidget.ViewMode.IconMode)
+        self.setResizeMode(QListWidget.ResizeMode.Adjust)
         self.setIconSize(QSize(64, 64))
         self.setWordWrap(True)
         self.setSpacing(3)
@@ -301,18 +302,18 @@ class GameList(QListWidget):
             return
         selected = selected[0]
         menu = QMenu(self)
-        desktop = menu.addAction(self.style().standardIcon(QStyle.SP_DesktopIcon), 'Add to desktop')
-        restore_gui = menu.addAction(self.style().standardIcon(QStyle.SP_DialogResetButton), 'Restore PP GUI')
-        remove = menu.addAction(self.style().standardIcon(QStyle.SP_TrashIcon), 'Remove game entry')
-        uninstall = menu.addAction(self.style().standardIcon(QStyle.SP_DialogCloseButton), 'Uninstall game')
+        desktop = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DesktopIcon), 'Add to desktop')
+        restore_gui = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogResetButton), 'Restore PP GUI')
+        remove = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon), 'Remove game entry')
+        uninstall = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCloseButton), 'Uninstall game')
         if not selected.game_dir.startswith(g.games_dir):
             uninstall.setVisible(False)
         action = menu.exec(self.mapToGlobal(event.pos()))
-        desktop_shortcut = QStandardPaths.writableLocation(QStandardPaths.DesktopLocation) + '/' + Path(selected.desktop_file).name
+        desktop_shortcut = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DesktopLocation) + '/' + Path(selected.desktop_file).name
         if action == desktop:
             if Path(desktop_shortcut).exists():
                 res = QMessageBox.question(self, 'Shortcut already exuists', 'Desktop shortcut <b>' + desktop_shortcut + '</b> already exists. Overwrite ?')
-                if res != QMessageBox.Yes:
+                if res != QMessageBox.StandardButton.Yes:
                     return
             shutil.copy(selected.desktop_file, desktop_shortcut)
         if action == restore_gui:
@@ -335,7 +336,7 @@ class GameList(QListWidget):
                 'Are you shure ?',
                 'Do you really want to uninstall <b>' + selected.get('Name') + '</b><br/>located in "<b>'+selected.game_dir+'</b>" ?'
             )
-            if res != QMessageBox.Yes:
+            if res != QMessageBox.StandardButton.Yes:
                 return
             Path(desktop_shortcut).unlink(True)
             Path(selected.desktop_file).unlink(True)
@@ -366,7 +367,7 @@ class GameItem(QListWidgetItem):
         icon_path = self.get('Icon') if Path(self.get('Icon')).exists() else g.pp_icon
         qicon = QIcon(icon_path)
         self.setIcon(qicon)
-        self.setTextAlignment(Qt.AlignHCenter or Qt.AlignTop)
+        self.setTextAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         self.setSizeHint(QSize(100, 105))
         self.game_dir = shlex.split(self.get('Exec'))[-1]
         if self.game_dir.startswith(g.games_dir):

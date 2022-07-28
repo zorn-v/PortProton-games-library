@@ -9,9 +9,9 @@ from pathlib import Path
 from subprocess import run
 from types import SimpleNamespace
 try:
-    from PyQt6.QtCore import *
-    from PyQt6.QtGui import *
-    from PyQt6.QtWidgets import *
+    from PyQt6.QtCore import * # type: ignore
+    from PyQt6.QtGui import * # type: ignore
+    from PyQt6.QtWidgets import * # type: ignore
 except ModuleNotFoundError as e:
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *

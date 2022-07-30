@@ -288,20 +288,14 @@ class GameList(QListWidget):
 
     def reload(self):
         self.clear()
-        def validate(shortcut):
-            config = RawConfigParser()
-            config.read(shortcut)
-            try:
-                if config.get('Desktop Entry', 'Exec') and config.get('Desktop Entry', 'Name', fallback=None) != 'PortProton':
-                    return True
-            except Exception:
-                return False
         shortcuts = list(Path(g.shortcuts_dir).glob('*.desktop'))
         shortcuts += list(Path(g.base_dir).glob('*.desktop'))
         for shortcut in shortcuts:
-            if validate(shortcut):
+            try:
                 item = GameItem(self, shortcut)
                 self.addItem(item)
+            except Exception:
+                pass
         self.sortItems()
         self.setCurrentIndex(QModelIndex())
 
@@ -375,11 +369,21 @@ def human_size(num):
 
 class GameItem(QListWidgetItem):
     def __init__(self, parent, desktop_file):
-        super().__init__(parent)
         self.desktop_file = desktop_file
         self.config = RawConfigParser()
         self.config.read(desktop_file)
         text = self.get('Name', Path(desktop_file).stem)
+        if not self.get('Exec') or text == 'PortProton':
+            raise Exception('Validation fail')
+        self.game_dir = shlex.split(self.get('Exec'))[-1]
+        if self.game_dir.startswith(g.games_dir):
+            self.game_dir = g.games_dir + '/' + self.game_dir[len(g.games_dir)+1:].split('/')[0]
+        else:
+            self.game_dir = str(Path(self.game_dir).parent)
+        if self.game_dir == '.':
+            raise Exception('Can not determine game dir')
+        super().__init__(parent)
+
         self.setToolTip(text)
         self.setText(text)
         icon_path = self.get('Icon') if Path(self.get('Icon')).exists() else g.pp_icon
@@ -387,11 +391,7 @@ class GameItem(QListWidgetItem):
         self.setIcon(qicon)
         self.setTextAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         self.setSizeHint(QSize(100, 105))
-        self.game_dir = shlex.split(self.get('Exec'))[-1]
-        if self.game_dir.startswith(g.games_dir):
-            self.game_dir = g.games_dir + '/' + self.game_dir[len(g.games_dir)+1:].split('/')[0]
-        else:
-            self.game_dir = str(Path(self.game_dir).parent)
+
         self._set_dir_size(None)
         dir_size_cache = self.game_dir + '/.size'
         if Path(dir_size_cache).exists():

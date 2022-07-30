@@ -18,7 +18,7 @@ except ModuleNotFoundError:
     from PyQt5.QtWidgets import *
 
 settings = QSettings('PPGL', 'PortProtonGamesLib')
-g = SimpleNamespace()
+g = SimpleNamespace(locale = '')
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -46,7 +46,9 @@ class MainWindow(QMainWindow):
         g.shortcuts_dir = g.base_dir + '/shortcuts'
         g.games_dir = g.base_dir + '/games'
 
-        g.locale = Path(g.base_dir + '/data/tmp/PortProton_loc').read_text().strip()
+        loc_path = Path(g.base_dir + '/data/tmp/PortProton_loc')
+        if loc_path.exists():
+            g.locale = loc_path.read_text().strip()
 
         Path(g.shortcuts_dir).mkdir(parents=True, exist_ok=True)
         Path(g.games_dir).mkdir(parents=True, exist_ok=True)

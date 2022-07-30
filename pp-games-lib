@@ -435,7 +435,7 @@ lang = {
         'Dir already exists': 'Директория уже существует',
         'Dir <b>{0}</b> already exists. Overwrite ?': 'Директория <b>{0}</b> уже существует. Перезаписать ?',
         'Add to desktop': 'Добавить на рабочий стол',
-        'Restore PortProton GUI': 'Восстановить GUI PortProton',
+        'Restore PortProton GUI': 'Восстановить PortProton GUI',
         'Remove game entry': 'Убрать из списка',
         'Uninstall game': 'Удалить игру',
         'Do you really want to uninstall <b>{0}</b><br/>located in "<b>{1}</b>" ?': 'Вы действительно хотите удалить <b>{0}</b><br/>расположеную в "<b>{1}</b>" ?'

@@ -4,7 +4,7 @@ import os
 import re
 import shlex
 import shutil
-from configparser import ConfigParser
+from configparser import RawConfigParser
 from pathlib import Path
 from subprocess import run
 from types import SimpleNamespace
@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
         if geometry:
             self.restoreGeometry(geometry)
 
-        shortcut = ConfigParser()
+        shortcut = RawConfigParser()
         shortcut.read(os.getenv('HOME') + '/.local/share/applications/PortProton.desktop')
         scripts_dir = shortcut.get('Desktop Entry', 'Path', fallback=os.getenv('HOME') + '/.local/share/PortWINE/PortProton/data/scripts')
         if not scripts_dir or not Path(scripts_dir).is_dir():
@@ -289,10 +289,10 @@ class GameList(QListWidget):
     def reload(self):
         self.clear()
         def validate(shortcut):
-            config = ConfigParser()
+            config = RawConfigParser()
             config.read(shortcut)
             try:
-                if config.get('Desktop Entry', 'Exec'):
+                if config.get('Desktop Entry', 'Exec') and config.get('Desktop Entry', 'Name', fallback=None) != 'PortProton':
                     return True
             except Exception:
                 return False
@@ -377,7 +377,7 @@ class GameItem(QListWidgetItem):
     def __init__(self, parent, desktop_file):
         super().__init__(parent)
         self.desktop_file = desktop_file
-        self.config = ConfigParser()
+        self.config = RawConfigParser()
         self.config.read(desktop_file)
         text = self.get('Name', Path(desktop_file).stem)
         self.setToolTip(text)

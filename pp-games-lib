@@ -13,9 +13,9 @@ try:
     from PyQt6.QtGui import * # type: ignore
     from PyQt6.QtWidgets import * # type: ignore
 except ModuleNotFoundError:
-    from PyQt5.QtCore import *
-    from PyQt5.QtGui import *
-    from PyQt5.QtWidgets import *
+    from PyQt5.QtCore import * # type: ignore
+    from PyQt5.QtGui import * # type: ignore
+    from PyQt5.QtWidgets import * # type: ignore
 
 settings = QSettings('PPGL', 'PortProtonGamesLib')
 g = SimpleNamespace(locale = '')

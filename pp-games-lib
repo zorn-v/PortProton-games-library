@@ -400,7 +400,7 @@ class GameItem(QListWidgetItem):
             def calc_dir_size():
                 if not Path(self.game_dir).exists():
                     return
-                dir_size = sum(p.stat().st_size for p in Path(self.game_dir).rglob('*'))
+                dir_size = sum(p.stat(follow_symlinks=False).st_size for p in Path(self.game_dir).rglob('*'))
                 self._set_dir_size(dir_size)
                 Path(dir_size_cache).write_text(str(dir_size))
             thread = QThread(parent)

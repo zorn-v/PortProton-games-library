@@ -246,13 +246,12 @@ class InstallGame(QDialog):
             export portwine_exe={exe_file}
             cd {shlex.quote(g.scripts_dir)}
             . {shlex.quote(g.scripts_dir + '/runlib')}
-            pw_create_gui_png
             pw_init_db
             [ -f {ppdb} ] && . {ppdb}
             echo -e "export PW_VULKAN_USE=${{PW_VULKAN_USE:-1}}\nexport PW_GUI_DISABLED_CS=1" >> {ppdb}
         """
         run(['bash', '-c', script])
-        icon_path = g.base_dir + '/data/img/' + Path(item.text()).stem + '.png'
+        icon_path = g.games_dir + '/' + item.text() + '.ico'
         if not Path(icon_path).exists():
             icon_path = g.pp_icon
         Path(shortcut).write_text(f"""[Desktop Entry]
@@ -338,10 +337,13 @@ class GameList(QListWidget):
                         if 'PW_GUI_DISABLED_CS' not in line:
                             write.write(line)
             os.rename(ppdb + '.new', ppdb)
-        if action == remove:
+        def remove_shortcut():
             Path(desktop_shortcut).unlink(True)
             Path(selected.desktop_file).unlink(True)
-            Path(selected.get('Icon')).unlink(True)
+            def_icon_path = g.base_dir + '/data/img/' + Path(shlex.split(selected.get('Exec'))[-1]).stem + '.png'
+            Path(def_icon_path).unlink(True)
+        if action == remove:
+            remove_shortcut()
             self.reload()
         if action == uninstall:
             res = QMessageBox.question(self,
@@ -350,9 +352,7 @@ class GameList(QListWidget):
             )
             if res != QMessageBox.StandardButton.Yes:
                 return
-            Path(desktop_shortcut).unlink(True)
-            Path(selected.desktop_file).unlink(True)
-            Path(selected.get('Icon')).unlink(True)
+            remove_shortcut()
             if selected.game_dir.startswith(g.games_dir):
                 shutil.rmtree(selected.game_dir, True)
             self.reload()

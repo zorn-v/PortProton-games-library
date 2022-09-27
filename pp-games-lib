@@ -233,7 +233,7 @@ class InstallGame(QDialog):
         src_dir = self.install_dir + '/' + game_dir
         dst_dir = g.games_dir + '/' + game_dir
         exe_file = shlex.quote(g.games_dir + '/' + item.text())
-        ppdb = shlex.quote(g.games_dir + '/' + item.text()) + '.ppdb'
+        ppdb = shlex.quote(g.games_dir + '/' + item.text() + '.ppdb')
         self.setDisabled(True)
         if self._installing and Path(dst_dir).exists():
             res = QMessageBox.question(self, _tr('Dir already exists'), _tr('Dir <b>{0}</b> already exists. Overwrite ?', game_dir))

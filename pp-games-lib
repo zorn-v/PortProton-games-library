@@ -448,6 +448,7 @@ def _tr(text, *fmt):
     return res
 
 app = QApplication([])
+app.setDesktopFileName('PortProton')
 win = MainWindow()
 win.show()
 app.exec()

@@ -315,6 +315,7 @@ class GameList(QListWidget):
         menu = QMenu(self)
         desktop = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DesktopIcon), _tr('Add to desktop'))
         restore_gui = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogResetButton), _tr('Restore PortProton GUI'))
+        default_wine = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOkButton), _tr('Set default wine'))
         remove = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon), _tr('Remove game entry'))
         uninstall = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCloseButton), _tr('Uninstall game'))
         if not selected.game_dir.startswith(g.games_dir):
@@ -327,14 +328,15 @@ class GameList(QListWidget):
                 if res != QMessageBox.StandardButton.Yes:
                     return
             shutil.copy(selected.desktop_file, desktop_shortcut)
-        if action == restore_gui:
+        if action == restore_gui or action == default_wine:
+            ignore_line = 'PW_GUI_DISABLED_CS' if action == restore_gui else 'PW_WINE_USE'
             ppdb = shlex.split(selected.get('Exec'))[-1] + '.ppdb'
             if not Path(ppdb).exists():
                 return
             with open(ppdb, 'r') as read:
                 with open(ppdb + '.new', 'w') as write:
                     while (line := read.readline()):
-                        if 'PW_GUI_DISABLED_CS' not in line:
+                        if ignore_line not in line:
                             write.write(line)
             os.rename(ppdb + '.new', ppdb)
         def remove_shortcut():
@@ -436,6 +438,7 @@ lang = {
         'Dir <b>{0}</b> already exists. Overwrite ?': 'Директория <b>{0}</b> уже существует. Перезаписать ?',
         'Add to desktop': 'Добавить на рабочий стол',
         'Restore PortProton GUI': 'Восстановить PortProton GUI',
+        'Set default wine': 'Выбрать дефолтный wine',
         'Remove game entry': 'Убрать из списка',
         'Uninstall game': 'Удалить игру',
         'Do you really want to uninstall <b>{0}</b><br/>located in "<b>{1}</b>" ?': 'Вы действительно хотите удалить <b>{0}</b><br/>расположеную в "<b>{1}</b>" ?'

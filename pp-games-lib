@@ -299,7 +299,7 @@ class GameList(QListWidget):
                 self.addItem(item)
             except ValueError:
                 pass
-            except Exception:
+            except:
                 logging.exception('Error while parse "%s"', shortcut)
         self.sortItems()
         self.setCurrentIndex(QModelIndex())
@@ -324,6 +324,10 @@ class GameList(QListWidget):
         default_wine = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOkButton), _tr('Set default wine'))
         remove = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon), _tr('Remove game entry'))
         uninstall = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCloseButton), _tr('Uninstall game'))
+        if not selected.pp_gui_disabled:
+            restore_gui.setVisible(False)
+        if not selected.wine_use:
+            default_wine.setVisible(False)
         if not selected.game_dir.startswith(g.games_dir):
             uninstall.setVisible(False)
         action = menu.exec(self.mapToGlobal(event.pos()))
@@ -345,6 +349,8 @@ class GameList(QListWidget):
                         if ignore_line not in line:
                             write.write(line)
             os.rename(ppdb + '.new', ppdb)
+            if action == restore_gui:
+                selected.pp_gui_disabled = False
             if action == default_wine:
                 selected.wine_use = None
                 self.selectItem(selected)
@@ -393,12 +399,16 @@ class GameItem(QListWidgetItem):
             self.game_dir = str(Path(exe_file).parent)
         if self.game_dir == '.':
             raise ValueError('Can not determine game dir')
+        self.pp_gui_disabled = False
         self.wine_use = None
         ppdb = exe_file + '.ppdb'
         if Path(ppdb).exists():
             ppdb_conf = RawConfigParser(strict=False)
             with open(ppdb) as f:
                 ppdb_conf.read_string('[dummy]\n' + f.read())
+            pp_gui_disabled = ppdb_conf.get('dummy', 'export PW_GUI_DISABLED_CS', fallback='').strip('"')
+            try: self.pp_gui_disabled = bool(int(pp_gui_disabled))
+            except: self.pp_gui_disabled = bool(pp_gui_disabled)
             self.wine_use = ppdb_conf.get('dummy', 'export PW_WINE_USE', fallback='').strip('"')
 
         super().__init__(parent)

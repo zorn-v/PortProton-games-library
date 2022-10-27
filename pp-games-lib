@@ -345,6 +345,9 @@ class GameList(QListWidget):
                         if ignore_line not in line:
                             write.write(line)
             os.rename(ppdb + '.new', ppdb)
+            if action == default_wine:
+                selected.wine_use = None
+                self.selectItem(selected)
         def remove_shortcut():
             Path(desktop_shortcut).unlink(True)
             Path(selected.desktop_file).unlink(True)

@@ -284,6 +284,7 @@ class GameList(QListWidget):
         self.currentItemChanged.connect(self.selectItem)
         self.setViewMode(QListWidget.ViewMode.IconMode)
         self.setResizeMode(QListWidget.ResizeMode.Adjust)
+        self.setDragDropMode(QListWidget.NoDragDrop)
         self.setIconSize(QSize(64, 64))
         self.setWordWrap(True)
         self.setSpacing(3)

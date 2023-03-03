@@ -132,6 +132,7 @@ class LoadListThread(QThread):
         self.install_dir = install_dir
     def run(self):
         exe_list = list(Path(self.install_dir).glob('**/*.exe'))
+        exe_list = [f for f in exe_list if not re.search(r'(/unins.*$|/unity|/ue4prereq|redist/)', str(f), re.IGNORECASE)]
         self.completed.emit(exe_list)
 
 class InstallGame(QDialog):

@@ -415,7 +415,8 @@ class GameItem(QListWidgetItem):
         if Path(ppdb).exists():
             ppdb_conf = RawConfigParser(strict=False)
             with open(ppdb) as f:
-                ppdb_conf.read_string('[dummy]\n' + f.read())
+                try: ppdb_conf.read_string('[dummy]\n' + f.read())
+                except: pass
             pp_gui_disabled = ppdb_conf.get('dummy', 'export PW_GUI_DISABLED_CS', fallback='').strip('"')
             try: self.pp_gui_disabled = bool(int(pp_gui_disabled))
             except: self.pp_gui_disabled = bool(pp_gui_disabled)

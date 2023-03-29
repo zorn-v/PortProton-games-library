@@ -260,6 +260,7 @@ class InstallGame(QDialog):
             cd {shlex.quote(g.scripts_dir)}
             . {shlex.quote(g.scripts_dir + '/runlib')}
             pw_init_db
+            . {shlex.quote(g.scripts_dir + '/../user.conf')}
             [ -f {ppdb} ] && . {ppdb}
             echo -e "export PW_VULKAN_USE=${{PW_VULKAN_USE:-1}}\nexport PW_GUI_DISABLED_CS=1" >> {ppdb}
         """

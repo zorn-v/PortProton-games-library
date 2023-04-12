@@ -209,7 +209,7 @@ class InstallGame(QDialog):
                 export PW_GUI_DISABLED_CS=1
                 export PW_PREFIX_NAME=INSTALL
                 export PW_DLL_INSTALL=mfc42
-                PW_WINE_USE=$(ls $PORT_WINE_PATH/data/dist/ | grep ^WINE | tail -n1)
+                PW_WINE_USE=$(ls $PORT_WINE_PATH/data/dist/ | grep "^WINE-.*-AMD64\\$" | tail -n1)
                 if [ -z "$PW_WINE_USE" ]
                 then
                     VER=$(curl -s https://api.github.com/repos/Kron4ek/Wine-Builds/releases?per_page=1 | grep tag_name |  cut -d \\" -f 4)

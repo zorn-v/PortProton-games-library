@@ -416,12 +416,14 @@ class GameItem(QListWidgetItem):
         if Path(ppdb).exists():
             ppdb_conf = RawConfigParser(strict=False)
             with open(ppdb) as f:
-                try: ppdb_conf.read_string('[dummy]\n' + f.read())
+                try: ppdb_conf.read_string('[DEFAULT]\n' + f.read())
                 except: pass
-            pp_gui_disabled = ppdb_conf.get('dummy', 'export PW_GUI_DISABLED_CS', fallback='').strip('"')
+            def get_ppdb_val(name):
+                return ppdb_conf.get('DEFAULT', 'export ' + name, fallback='').split('\n')[0].strip('"')
+            pp_gui_disabled = get_ppdb_val('PW_GUI_DISABLED_CS')
             try: self.pp_gui_disabled = bool(int(pp_gui_disabled))
             except: self.pp_gui_disabled = bool(pp_gui_disabled)
-            self.wine_use = ppdb_conf.get('dummy', 'export PW_WINE_USE', fallback='').strip('"')
+            self.wine_use = get_ppdb_val('PW_WINE_USE')
 
         super().__init__(parent)
 

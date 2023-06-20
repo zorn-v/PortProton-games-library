@@ -432,6 +432,12 @@ class GameItem(QListWidgetItem):
         icon_path = self.get('Icon') if Path(self.get('Icon')).exists() else g.pp_icon
         qicon = QIcon(icon_path)
         self.setIcon(qicon)
+        icon_pixmap = self.icon().pixmap(64, 64)
+        if icon_pixmap.isNull():
+            icon_pixmap = QPixmap(1, 1)
+            icon_pixmap.fill(Qt.GlobalColor.transparent)
+        if icon_pixmap.size() != QSize(64, 64):
+            self.setIcon(QIcon(icon_pixmap.scaled(64, 64, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation)))
         self.setTextAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         self.setSizeHint(QSize(100, 105))
 

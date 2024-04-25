@@ -467,7 +467,7 @@ import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 lang = {
-    'RUS': {
+    'ru': {
         'Install new game': 'Установить игру',
         'Add game entry': 'Добавить в список',
         'Reload list': 'Обновить список',

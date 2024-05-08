@@ -207,6 +207,7 @@ class InstallGame(QDialog):
             echo '
                 export PW_VULKAN_USE=1
                 export PW_GUI_DISABLED_CS=1
+                export PW_CHECK_AUTOINSTAL=1
                 export PW_PREFIX_NAME=INSTALL
                 export PW_DLL_INSTALL=mfc42
                 PW_WINE_USE=$(ls $PORT_WINE_PATH/data/dist/ | grep "^WINE-.*-AMD64\\$" | tail -n1)

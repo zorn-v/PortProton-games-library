@@ -210,6 +210,7 @@ class InstallGame(QDialog):
                 export PW_CHECK_AUTOINSTAL=1
                 export PW_PREFIX_NAME=INSTALL
                 export PW_DLL_INSTALL=mfc42
+                export PW_NO_AUTOCREATE_SHORTCUT=1
                 PW_WINE_USE=$(ls $PORT_WINE_PATH/data/dist/ | grep "^WINE-.*-AMD64\\$" | tail -n1)
                 if [ -z "$PW_WINE_USE" ]
                 then

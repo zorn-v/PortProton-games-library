@@ -248,7 +248,7 @@ class InstallGame(QDialog):
         src_dir = self.install_dir + '/' + game_dir
         dst_dir = g.games_dir + '/' + game_dir
         exe_file = shlex.quote(g.games_dir + '/' + item.text())
-        ppdb = shlex.quote(g.games_dir + '/' + item.text() + '.ppdb')
+        start_sh = shlex.quote(g.scripts_dir + '/start.sh')
         self.setDisabled(True)
         if self._installing and Path(dst_dir).exists():
             res = QMessageBox.question(self, _tr('Dir already exists'), _tr('Dir <b>{0}</b> already exists. Overwrite ?', game_dir))
@@ -256,23 +256,13 @@ class InstallGame(QDialog):
                 return
         if self._installing:
             os.rename(src_dir, dst_dir)
-        script = f"""
-            export INSTALLING_PORT=1
-            export portwine_exe={exe_file}
-            cd {shlex.quote(g.scripts_dir)}
-            . {shlex.quote(g.scripts_dir + '/runlib')}
-            pw_init_db
-            . {shlex.quote(g.scripts_dir + '/../user.conf')}
-            [ -f {ppdb} ] && . {ppdb}
-            echo -e "export PW_VULKAN_USE=${{PW_VULKAN_USE:-1}}\nexport PW_GUI_DISABLED_CS=1" >> {ppdb}
-        """
-        run(['bash', '-c', script])
+        run(['bash', '-c', f"{start_sh} --edit-db {exe_file} PW_GUI_DISABLED_CS=1"])
         icon_path = g.games_dir + '/' + item.text() + '.ico'
         if not Path(icon_path).exists():
             icon_path = g.pp_icon
         Path(shortcut).write_text(f"""[Desktop Entry]
 Name={shortcut_name}
-Exec=env {shlex.quote(g.scripts_dir + '/start.sh')} {exe_file}
+Exec=env {start_sh} {exe_file}
 Type=Application
 Categories=Game
 StartupNotify=true

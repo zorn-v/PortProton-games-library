@@ -324,8 +324,8 @@ class GameList(QListWidget):
         selected = selected[0]
         menu = QMenu(self)
         desktop = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DesktopIcon), _tr('Add to desktop'))
-        disable_gui = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton), _tr('Disable PortProton GUI'))
-        restore_gui = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogResetButton), _tr('Restore PortProton GUI'))
+        disable_gui = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowDown), _tr('Disable PortProton GUI'))
+        restore_gui = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_RestoreDefaultsButton), _tr('Restore PortProton GUI'))
         default_wine = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOkButton), _tr('Set default wine'))
         remove = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon), _tr('Remove game entry'))
         uninstall = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCloseButton), _tr('Uninstall game'))

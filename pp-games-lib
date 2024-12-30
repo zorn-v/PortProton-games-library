@@ -337,6 +337,7 @@ class GameList(QListWidget):
             default_wine.setVisible(False)
         if not selected.game_dir.startswith(g.games_dir):
             uninstall.setVisible(False)
+        if not selected.is_pp:
             disable_gui.setVisible(False)
         action = menu.exec(self.mapToGlobal(event.pos()))
         desktop_shortcut = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DesktopLocation) + '/' + Path(selected.desktop_file).name
@@ -404,6 +405,7 @@ class GameItem(QListWidgetItem):
         text = self.get('Name', Path(desktop_file).stem)
         if not self.get('Exec') or text == 'PortProton':
             raise ValueError('Validation fail')
+        self.is_pp = self.get('Path').startswith(g.scripts_dir)
         exe_file = shlex.split(self.get('Exec'))[-1]
         if exe_file.startswith(g.games_dir):
             self.game_dir = g.games_dir + '/' + exe_file[len(g.games_dir)+1:].split('/')[0]

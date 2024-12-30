@@ -323,27 +323,35 @@ class GameList(QListWidget):
         selected = selected[0]
         menu = QMenu(self)
         desktop = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DesktopIcon), _tr('Add to desktop'))
+        disable_gui = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton), _tr('Disable PortProton GUI'))
         restore_gui = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogResetButton), _tr('Restore PortProton GUI'))
         default_wine = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOkButton), _tr('Set default wine'))
         remove = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon), _tr('Remove game entry'))
         uninstall = menu.addAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCloseButton), _tr('Uninstall game'))
-        if not selected.pp_gui_disabled:
+        if selected.pp_gui_disabled:
+            disable_gui.setVisible(False)
+        else:
             restore_gui.setVisible(False)
         if not selected.wine_use:
             default_wine.setVisible(False)
         if not selected.game_dir.startswith(g.games_dir):
             uninstall.setVisible(False)
+            disable_gui.setVisible(False)
         action = menu.exec(self.mapToGlobal(event.pos()))
         desktop_shortcut = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DesktopLocation) + '/' + Path(selected.desktop_file).name
+        ppdb = shlex.split(selected.get('Exec'))[-1] + '.ppdb'
         if action == desktop:
             if Path(desktop_shortcut).exists():
                 res = QMessageBox.question(self, _tr('Shortcut already exists'), _tr('Shortcut <b>{0}</b> already exists. Overwrite ?', desktop_shortcut))
                 if res != QMessageBox.StandardButton.Yes:
                     return
             shutil.copy(selected.desktop_file, desktop_shortcut)
-        if action == restore_gui or action == default_wine:
+        if action == disable_gui:
+            with open(ppdb, 'a') as w:
+                w.write('export PW_GUI_DISABLED_CS=1\n')
+            selected.pp_gui_disabled = True
+        if action in [restore_gui, default_wine]:
             ignore_line = 'PW_GUI_DISABLED_CS' if action == restore_gui else 'PW_WINE_USE'
-            ppdb = shlex.split(selected.get('Exec'))[-1] + '.ppdb'
             if not Path(ppdb).exists():
                 return
             with open(ppdb, 'r') as read:
@@ -477,6 +485,7 @@ lang = {
         'Dir <b>{0}</b> already exists. Overwrite ?': 'Директория <b>{0}</b> уже существует. Перезаписать ?',
         'Add to desktop': 'Добавить на рабочий стол',
         'Restore PortProton GUI': 'Восстановить PortProton GUI',
+        'Disable PortProton GUI': 'Отключить PortProton GUI',
         'Set default wine': 'Выбрать дефолтный wine',
         'Remove game entry': 'Убрать из списка',
         'Uninstall game': 'Удалить игру',

@@ -417,6 +417,7 @@ class GameItem(QListWidgetItem):
         self.wine_use = None
         ppdb = exe_file + '.ppdb'
         if Path(ppdb).exists():
+            self.is_pp = True
             ppdb_conf = RawConfigParser(strict=False)
             with open(ppdb) as f:
                 try: ppdb_conf.read_string('[DEFAULT]\n' + f.read())

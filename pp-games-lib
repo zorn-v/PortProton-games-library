@@ -2,6 +2,7 @@
 
 import os
 import re
+import sys
 import shlex
 import shutil
 import logging
@@ -498,7 +499,7 @@ def _tr(text, *fmt):
         res = res.format(*fmt)
     return res
 
-app = QApplication([])
+app = QApplication(sys.argv)
 app.setDesktopFileName('PortProton')
 win = MainWindow()
 win.show()
